@@ -27,7 +27,7 @@ class myIdawiObserver extends IdawiObserver {
             var data = JSON.parse(data);
             this.parseData(data)
             this.draw()
-            this.addOnClick()
+            //this.addOnClick()
         }
         else { console.log("EOT") }
     }
@@ -361,18 +361,38 @@ class myComponent {
             res += '<div class="seven wide column"><progress class="progcomp" value="' + this.progress + '" max="' + this.progressTarget + '"></progress><p>' + this.progress + ' of ' + this.progressTarget + '</p></div>'
 
 
-        //affichage des messages
-        res += '<div id="messageblock' + this.name + '" style="display:' + this.displaymessage + '">'
-        for (let i = this.messages.length - 1; i >= 0; i--) {
-            res += '<p style="text-align:justify"><b> message n°' + (i + 1) + '</b></p>'
+        //affichage des messages et des erreurs
+        res += '<div id="messageblock' + this.name +'">'
+        let total_msg_erreur = this.messages.length + this.errors.length;
+        for(let i = 0; i < total_msg_erreur; i++){
+            var a = i+1
+            var b = i+2
+            res += '<p style="text-align:justify"><b>' + a + '</b></p>'
             var treeres = ""
             treeres = this.tree(treeres, this.messages[i])
             res += treeres
+            if(this.errors.length > 0){
+                res += '<p style="text-align:justify"><b>' + b + '</b></p>'
+                var tree_res_errors = ""
+                tree_res_errors = this.tree(tree_res_errors,this.errors[i])
+                res+= tree_res_errors;
+            }
         }
         res += '</div>'
 
+        /*let j = 1;
+        for (let i = this.messages.length - 1; i >= 0; i--) {
+
+            res += '<p style="text-align:justify"><b>' + j + '</b></p>'
+            var treeres = ""
+            treeres = this.tree(treeres, this.messages[i])
+            res += treeres
+            j++
+        }
+        res += '</div>'*/
+
         //affichage des erreurs
-        res += '<div id="errorblock' + this.name + '" style="display:' + this.displayerror + '">'
+        /*res += '<div id="errorblock' + this.name + '" style="display:' + this.displayerror + '">'
         res += '<br><h3>Errors received</h3>'
         for (let i = this.errors.length - 1; i >= 0; i--) {
             res += '<p style="text-align:justify"><b> Error n°' + (i + 1) + '</b></p>'
@@ -380,7 +400,7 @@ class myComponent {
             treeres = this.tree(treeres, this.errors[i])
             res += treeres
         }
-        res += '</div>'
+        res += '</div>'*/
 
         //si eot alors affiche message de fin de transmission
         if (this.eot)
