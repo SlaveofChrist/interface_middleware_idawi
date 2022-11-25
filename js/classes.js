@@ -22,10 +22,10 @@ class myIdawiObserver extends IdawiObserver {
     }
 
     // implementation de next qui sera appelé par l'observable à chaque nouveau message
-    next(header, data) {
+    newMessage(header, data) {
         if (header['semantic'] !== 'EOT') {
             var data = JSON.parse(data);
-            this.parseData(data)
+            this.processData(data)
             this.draw()
             //this.addOnClick()
         }
@@ -75,75 +75,34 @@ class myIdawiObserver extends IdawiObserver {
     }
 
     //traite les données reçus dans le data
-    parseData(data) {
-        var comps = data.route.elements
-        var message = data.content
-        var res
-        if (!this.IsJsonString(message)) {
-            res = this.checkJson(message)
-        }
-        else res = { "content": message }
+    processData(message) {
 
-        var name = comps[0].componentName
+        var name = message.route.elements[0].componentName
         var component = this.checkIfExists(name)
 
-        //date d'émission à convertir à partir de secondes depuis d'EPOC
-        var epoch = parseFloat(comps[0].emissionDate)
-        res["emissionDate"] = new Date(epoch * 1000).toLocaleString();
-
-        //si res est erreur
-        if (res.hasOwnProperty('error'))
-            component.errors.push(res)
+        //si data est erreur
+        if (message.content["#class"].includes("Exception"))
+            component.errors.push(message.content)
 
         //si res est progression
-        else if (res.hasOwnProperty('progress')) {
-            component.progress = res.progress
-            component.progressTarget = res.target
+        else if (message.content["#class"] == "idawi.ProgressRatio") {
+            component.progress = message["progress"]
+            component.progressTarget = message["target"]
         }
 
         //si res est EOT
-        else if (res.content == "EOT") {
+        else if (message.content["#class"] == 'idawi.EOT') {
             component.eot = true;
-            component.eotdate = res.emissionDate;
+            //date d'émission à convertir à partir de secondes depuis d'EPOC
+            var epoch = parseFloat(message.route.elements[0].emissionDate)
+            console.log(epoch)
+            component.eotdate = new Date(epoch * 1000).toLocaleString();
         }
 
         //tout le reste
-        else component.messages.push(res)
+        else component.messages.push(message)
     }
 
-    //check si c'est un json ou pas
-    IsJsonString(str) {
-        try {
-            JSON.parse(str);
-        } catch (e) {
-            return false;
-        }
-        return true;
-    }
-
-    //retourne le contenu du message par rapport au type de la classe
-    //à modifier sous forme de switch?
-    checkJson(data) {
-        var res
-        //si c'est un EOT
-        if (data["#class"] == 'idawi.EOT') {
-            return { "content": "EOT" }
-        }
-
-        //si c'est une erreur
-        if (data["#class"].includes("Exception")) {
-            res = { "error": data["message"] }
-        }
-
-        //si c'est une barre de progression
-        else if (data["#class"] == "idawi.ProgressRatio") {
-            res = { "progress": data["progress"], "target": data["target"] }
-        }
-
-        //tout le reste sera juste un json classique
-        else res = data
-        return res
-    }
 }
 
 
@@ -161,7 +120,7 @@ class myFormObserver extends IdawiObserver {
         document.getElementById("resultats").innerHTML += '<h1 style="text-align: center;margin-left: 38%;">Connection error with idawi.<br>Try again</h1>'
     }
 
-    next(header, data) {
+    newMessage(header, data) {
         if (header['semantic'] !== 'EOT') {
             var data = JSON.parse(data);
             this.parseData(data)
@@ -352,14 +311,20 @@ class myComponent {
 
         //nombre de messages
         //res += '<div class="ui grid"><div id="message' + this.name + '" class="messagecomp ' + sizecolumn + ' wide column"><i class="message-icon"></i> &#160;<b>messages(' + this.messages.length + ')</b></div>'
-
+        var progr_bar = ""
         //nombre d'errors
+        //progr_bar = '<div class="seven wide column"><progress class="progcomp" value="'+ 0 +'" max="'+ 100+ '"></progress><p>' + 0 + ' of ' + 100 + '</p></div>'
 
 
         //affichage barre de progression
+        //res +='<div><div></div>'
         if (this.progress != -1)
-            res += '<div class="seven wide column"><progress class="progcomp" value="' + this.progress + '" max="' + this.progressTarget + '"></progress><p>' + this.progress + ' of ' + this.progressTarget + '</p></div>'
-
+            progr_bar = '<div class="seven wide column"><progress class="progcomp" value="' + this.progress + '" max="' + this.progressTarget + '"></progress><p>' + this.progress + ' of ' + this.progressTarget + '</p></div>'
+        else if (this.eot === true){
+            progr_bar+= '<div class="seven wide column"><progress style="width: 100%" value="' + 100 + '" max="' + 100 + '"></progress><p>' + 100 + ' of ' + 100 + '</p></div>'
+        }
+        res+= progr_bar
+        //res+= '<div></div></div>'
 
         //affichage des messages et des erreurs
         res += '<div id="messageblock' + this.name +'">'
