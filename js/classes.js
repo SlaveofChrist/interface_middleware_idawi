@@ -307,7 +307,10 @@ class myComponent {
         var res = '<div id="component' + this.name + '" class="column">'
 
         //title
-        res += '<h3><i class="component-icon"></i> Component ' + this.name + ' ('+ this.messages.length  +'/' + this.errors.length +')' + '</h3>'
+        if(this.errors.length === 0)
+            res += '<h3><i class="component-icon"></i> Component ' + this.name + ' ('+ this.messages.length  +'/' + this.errors.length +')' + '</h3>'
+        else
+        res += '<h3><i class="component-icon"></i> Component ' + this.name + ' ('+ this.messages.length  +'/' + '<span style="color: red">' +this.errors.length+'</span>' +')' + '</h3>'
 
         //nombre de messages
         //res += '<div class="ui grid"><div id="message' + this.name + '" class="messagecomp ' + sizecolumn + ' wide column"><i class="message-icon"></i> &#160;<b>messages(' + this.messages.length + ')</b></div>'
@@ -332,15 +335,28 @@ class myComponent {
         for(let i = 0; i < total_msg_erreur; i++){
             var a = i+1
             var b = i+2
+
+            if(this.messages.length > 0 && this.errors.length === 0){
             res += '<p style="text-align:justify"><b>' + a + '</b></p>'
             var treeres = ""
             treeres = this.tree(treeres, this.messages[i])
             res += treeres
-            if(this.errors.length > 0){
+            }else if(this.errors.length > 0 && this.messages.length === 0){
+                res += '<p style="text-align:justify"><b>' + a + '</b></p>'
+                var tree_res_errors = ""
+                tree_res_errors = this.tree(tree_res_errors,this.errors[i])
+                res+= tree_res_errors;
+            }else if(this.messages.length > 0 && this.errors.length > 0){
+                res += '<p style="text-align:justify"><b>' + a + '</b></p>'
+                var treeres = ""
+                treeres = this.tree(treeres, this.messages[i])
+                res += treeres
+
                 res += '<p style="text-align:justify"><b>' + b + '</b></p>'
                 var tree_res_errors = ""
                 tree_res_errors = this.tree(tree_res_errors,this.errors[i])
                 res+= tree_res_errors;
+
             }
         }
         res += '</div>'
